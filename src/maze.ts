@@ -1,4 +1,3 @@
-// Placeholder for maze generation algorithms
-export class Maze {
-  // Implementation will be added later
-}
+export * from './coordinates';
+export * from './rectangular-grid';
+export * from './maze-generator';
