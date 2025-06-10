@@ -1,4 +1,4 @@
-import { RectangularGrid, Coordinates, Direction } from '../src/maze';
+import { RectangularGrid, Coordinates, Direction, MazeValidator } from '../src/maze';
 
 describe('Maze Module Exports', () => {
   test('should export RectangularGrid', () => {
@@ -17,5 +17,10 @@ describe('Maze Module Exports', () => {
     expect(Direction.South).toBeDefined();
     expect(Direction.East).toBeDefined();
     expect(Direction.West).toBeDefined();
+  });
+
+  test('should export MazeValidator', () => {
+    expect(MazeValidator).toBeDefined();
+    expect(typeof MazeValidator.validate).toBe('function');
   });
 });
