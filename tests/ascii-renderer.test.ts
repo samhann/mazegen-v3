@@ -48,6 +48,7 @@ describe('ASCIIRenderer', () => {
         ['0,1', '0,0'],
         ['1,1', '1,2'] // Center connection
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,2'
     };
@@ -72,6 +73,7 @@ describe('ASCIIRenderer', () => {
         ['1,1', '2,1'],
         ['2,1', '2,2']
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,2'
     };

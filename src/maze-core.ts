@@ -5,7 +5,8 @@ export type Solution = CellId[];
 
 export interface Maze {
   cells: Set<CellId>;
-  passages: Set<Passage>;
+  passages: Set<Passage>;        // Internal walkable paths between cells
+  boundaryWalls: Set<Passage>;   // Perimeter walls (closed unless at entrance/exit)
   entrance: CellId;
   exit: CellId;
 }

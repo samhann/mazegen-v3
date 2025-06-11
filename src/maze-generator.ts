@@ -65,18 +65,25 @@ export function generateMaze(grid: Grid, random: () => number = Math.random): Ma
   // Generate spanning tree
   const treeEdges = spanningTree(graph, random);
   
-  // Convert edges back to passages (only between real cells)
+  // Separate internal passages from boundary walls
   const passages = new Set<[CellId, CellId]>();
+  const boundaryWalls = new Set<[CellId, CellId]>();
   
   for (const edge of treeEdges) {
     if (cells.has(edge.from) && cells.has(edge.to)) {
+      // Internal passage between real cells
       passages.add(makePassage(edge.from, edge.to));
+    } else if (cells.has(edge.from) || cells.has(edge.to)) {
+      // Boundary wall between real cell and virtual "outside" cell
+      boundaryWalls.add(makePassage(edge.from, edge.to));
     }
+    // Note: edges between two virtual cells (if any) are ignored
   }
   
   return {
     cells,
     passages,
+    boundaryWalls,
     entrance,
     exit
   };

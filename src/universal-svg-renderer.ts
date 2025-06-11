@@ -53,24 +53,15 @@ export class UniversalSVGRenderer {
       svg += `" stroke="#ff0000" stroke-width="${this.wallWidth * 2}" fill="none" opacity="0.7"/>\n`;
     }
     
-    // Draw boundary walls (perimeter walls around the maze)
-    for (const cell of maze.cells) {
-      const boundaryWalls = grid.boundaryWalls(cell);
-      for (const [cellA, cellB] of boundaryWalls) {
-        // Check if this boundary wall should be rendered (not an opening)
-        const passageKey = `${cellA}|${cellB}`;
-        const reverseKey = `${cellB}|${cellA}`;
-        
-        if (!passageSet.has(passageKey) && !passageSet.has(reverseKey)) {
-          // This boundary wall is closed - render it
-          // One cell is real (in maze), one is virtual (outside)
-          const realCell = maze.cells.has(cellA) ? cellA : cellB;
-          const virtualCell = cellA === realCell ? cellB : cellA;
-          
-          if (realCell === cell) {
-            svg += this.renderBoundaryWall(realCell, virtualCell, grid, positions, minX, minY);
-          }
-        }
+    // Draw boundary walls from maze data
+    for (const [cellA, cellB] of maze.boundaryWalls) {
+      // One cell is real (in maze), one is virtual (outside)
+      const realCell = maze.cells.has(cellA) ? cellA : cellB;
+      const virtualCell = cellA === realCell ? cellB : cellA;
+      
+      // Only render if we have position data for the real cell
+      if (positions.has(realCell)) {
+        svg += this.renderBoundaryWall(realCell, virtualCell, grid, positions, minX, minY);
       }
     }
 

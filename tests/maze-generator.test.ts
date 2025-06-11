@@ -86,6 +86,7 @@ describe('generateMaze', () => {
         ['1,0', '2,0'] as [string, string]
         // Missing connections to other rows
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,2'
     };

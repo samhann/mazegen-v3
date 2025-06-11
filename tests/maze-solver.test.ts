@@ -66,6 +66,7 @@ describe('solveMaze', () => {
         ['0,0', '1,0'] as [string, string],
         // Missing connection to exit at 2,1
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,1'
     };
@@ -86,6 +87,7 @@ describe('solveMaze', () => {
         ['0,1', '1,1'] as [string, string],
         ['1,1', '2,1'] as [string, string]
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,1'
     };
@@ -107,6 +109,7 @@ describe('validateSolution', () => {
         ['0,0', '1,0'] as [string, string],
         ['1,0', '2,0'] as [string, string]
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,0'
     };
@@ -124,6 +127,7 @@ describe('validateSolution', () => {
         ['0,0', '1,0'] as [string, string]
         // Missing passage from 1,0 to 2,0
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,0'
     };
@@ -142,6 +146,7 @@ describe('validateSolution', () => {
         ['0,0', '1,0'] as [string, string],
         ['1,0', '2,0'] as [string, string]
       ]),
+      boundaryWalls: new Set<[string, string]>(),  // No boundary walls for this test
       entrance: '0,0',
       exit: '2,0'
     };
