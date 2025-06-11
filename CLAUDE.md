@@ -52,3 +52,42 @@ Previous attempts failed because:
 - **No incremental testing** - Built too much before validating foundations
 
 For hexagonal implementation: Use axial coordinates internally, convert to x,y only for rendering. Same Grid interface, different neighbor logic.
+
+## Engineering Humility
+
+**All code is suspect until proven correct through multiple validation layers:**
+
+1. **Implementation** - Assume bugs exist, write defensively
+2. **Unit tests pass** - Good sign, but tests can be wrong too  
+3. **Integration tests pass** - Better, but still not certain
+4. **Visual validation** - See the output, does it look right?
+5. **End-to-end verification** - Generate, solve, render - works completely?
+
+**Only after ALL validation layers pass should confidence increase.**
+
+**CRITICAL: Visual validation is mandatory, not optional.**
+- Unit tests passing ≠ correctness
+- Integration tests passing ≠ correctness  
+- Code that "should work" ≠ correctness
+- Only when you can SEE the output working correctly should confidence increase
+- If you cannot visually validate, you have NOT validated at all
+
+**LESSON: Beware of hidden interdependencies**
+- Changing one component may break others in unexpected ways
+- Renderers may assume specific coordinate systems/topologies
+- "Reusing existing code" doesn't mean it will work with new data
+- Always test the FULL pipeline, not just individual pieces
+- Start with the simplest possible case and verify each layer
+
+**Common overconfidence traps:**
+- "This should work because the logic seems right"
+- "Tests pass so it must be correct" 
+- "The algorithm is standard so implementation must be fine"
+- "It worked for rectangular so hex will be similar"
+
+**Defensive coding practices:**
+- Add assertions for assumptions
+- Test edge cases explicitly  
+- Visual inspection of small examples
+- Manual verification of key calculations
+- Incremental testing at each step
