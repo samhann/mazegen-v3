@@ -31,26 +31,22 @@ export function generateMaze(grid: Grid, random: () => number = Math.random): Ma
     }
   }
   
-  // Add boundary edges for entrance and exit (these are fixed - must be included)
-  const entranceBoundaries = grid.boundaryPassages(entrance);
-  const exitBoundaries = grid.boundaryPassages(exit);
-  
-  if (entranceBoundaries.length > 0) {
-    const [from, to] = entranceBoundaries[0];
-    edges.push({
-      from,
-      to,
-      isFixed: true  // Must be included for entrance
-    });
-  }
-  
-  if (exitBoundaries.length > 0) {
-    const [from, to] = exitBoundaries[0];
-    edges.push({
-      from,
-      to,
-      isFixed: true  // Must be included for exit
-    });
+  // Add boundary edges for all cells (to create perimeter walls)
+  // These are fixed edges EXCEPT at entrance/exit where we want openings
+  for (const cell of cells) {
+    const boundaries = grid.boundaryPassages(cell);
+    for (const [from, to] of boundaries) {
+      // Skip entrance and exit - we want openings there
+      if (cell === entrance || cell === exit) {
+        continue;
+      }
+      // Add as fixed edge - creates wall
+      edges.push({
+        from,
+        to,
+        isFixed: true
+      });
+    }
   }
   
   // Create graph for spanning tree algorithm

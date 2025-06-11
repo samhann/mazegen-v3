@@ -159,6 +159,50 @@ class RectangularGrid implements Grid {
 // - Boundary integrity maintained
 ```
 
+## Boundary Wall Design
+
+### Critical Concept: Wall Edges vs Entry/Exit Passages
+
+The maze generation algorithm needs to handle two distinct types of boundary connections:
+
+1. **Wall Edges (Perimeter Walls)**
+   - These are edges between ALL boundary cells and virtual "outside" nodes
+   - These edges MUST be included in the spanning tree (marked as `isFixed: true`)
+   - They ensure the maze has a solid perimeter wall
+   - In the implementation, these are returned by `boundaryPassages()` for all boundary cells
+
+2. **Entry/Exit Passages (Openings)**
+   - These are specific locations where we want openings in the perimeter
+   - These edges must NOT be included in the spanning tree
+   - By excluding these edges, we create openings at entrance and exit points
+   - The algorithm identifies these by checking if a boundary passage is at the entrance or exit cell
+
+### Implementation Strategy
+
+```typescript
+// In maze-generator.ts:
+// 1. Get ALL boundary passages for ALL boundary cells
+// 2. Add them as fixed edges EXCEPT those at entrance/exit cells
+// 3. This creates a solid wall with openings only where needed
+
+for (const cell of cells) {
+  const boundaries = grid.boundaryPassages(cell);
+  for (const [from, to] of boundaries) {
+    // Skip if this is an entrance or exit opening
+    if (cell === entrance || cell === exit) {
+      continue;  // Don't add - creates opening
+    }
+    // Add as fixed edge - creates wall
+    edges.push({ from, to, isFixed: true });
+  }
+}
+```
+
+This approach ensures:
+- The maze has a complete perimeter wall
+- Openings exist only at designated entrance/exit points
+- The spanning tree algorithm respects these constraints naturally
+
 ## Questions
 
 1. Should we use cell IDs (like "3,4") or cell references everywhere?
