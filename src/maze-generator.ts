@@ -1,118 +1,157 @@
-import { RectangularGrid } from './rectangular-grid';
-import { Coordinates, coordinatesToString, coordinatesEqual, Direction } from './coordinates';
+import { Grid, Maze, CellId, makePassage } from './maze-core';
+import { spanningTree, Graph, Edge } from './spanning-tree';
 
-export interface MazeGenerationOptions {
-  seed?: number;
-  startCell?: Coordinates;
-  addDefaultEntryExit?: boolean;
-}
-
-export class MazeGenerator {
-  private rng: () => number;
+// Generate a maze from a grid using spanning tree algorithm
+export function generateMaze(grid: Grid, random: () => number = Math.random): Maze {
+  const cells = new Set(grid.cells());
+  const entrance = grid.entranceCell();
+  const exit = grid.exitCell();
   
-  constructor(seed?: number) {
-    // Simple seeded random number generator for reproducible results
-    if (seed !== undefined) {
-      let state = seed;
-      this.rng = () => {
-        state = (state * 1103515245 + 12345) % 2147483648;
-        return state / 2147483648;
-      };
-    } else {
-      this.rng = Math.random;
-    }
+  if (!cells.has(entrance)) {
+    throw new Error('Entrance cell not in grid');
   }
-
-  /**
-   * Generates a maze using Depth-First Search (Recursive Backtracker) algorithm
-   */
-  generateWithDFS(grid: RectangularGrid, options: MazeGenerationOptions = {}): void {
-    const visited = new Set<string>();
-    const stack: Coordinates[] = [];
-    
-    // Choose starting cell (default to top-left)
-    const startCell = options.startCell || { row: 0, col: 0 };
-    if (!grid.isValidCoordinate(startCell)) {
-      throw new Error('Invalid start cell coordinates');
-    }
-    
-    // Start DFS from the chosen cell
-    let currentCell = startCell;
-    visited.add(coordinatesToString(currentCell));
-    
-    const totalCells = grid.getCellCount();
-    
-    while (visited.size < totalCells) {
-      const unvisitedNeighbors = this.getUnvisitedNeighbors(grid, currentCell, visited);
-      
-      if (unvisitedNeighbors.length > 0) {
-        // Choose a random unvisited neighbor
-        const randomIndex = Math.floor(this.rng() * unvisitedNeighbors.length);
-        const chosenNeighbor = unvisitedNeighbors[randomIndex];
-        
-        // Push current cell to stack for backtracking
-        stack.push(currentCell);
-        
-        // Remove wall between current cell and chosen neighbor
-        grid.removeWall(currentCell, chosenNeighbor);
-        
-        // Move to chosen neighbor
-        currentCell = chosenNeighbor;
-        visited.add(coordinatesToString(currentCell));
-      } else {
-        // Backtrack: no unvisited neighbors, go back to previous cell
-        if (stack.length > 0) {
-          currentCell = stack.pop()!;
-        } else {
-          // This should not happen if the grid is connected
-          break;
-        }
+  
+  if (!cells.has(exit)) {
+    throw new Error('Exit cell not in grid');
+  }
+  
+  // Build graph from grid topology
+  const edges: Edge<CellId>[] = [];
+  
+  // Add all internal edges (between grid cells)
+  for (const cell of cells) {
+    for (const neighbor of grid.neighbors(cell)) {
+      if (cell < neighbor) {  // Avoid duplicates
+        edges.push({
+          from: cell,
+          to: neighbor,
+          isFixed: false
+        });
       }
     }
   }
   
-  private getUnvisitedNeighbors(
-    grid: RectangularGrid, 
-    cell: Coordinates, 
-    visited: Set<string>
-  ): Coordinates[] {
-    // Only consider neighbors that are valid cells (internal to the grid)
-    // This automatically excludes border walls since getNeighbors only returns valid coordinates
-    return grid.getNeighbors(cell).filter(neighbor => 
-      !visited.has(coordinatesToString(neighbor))
-    );
+  // Add boundary edges for entrance and exit (these are fixed - must be included)
+  const entranceBoundaries = grid.boundaryPassages(entrance);
+  const exitBoundaries = grid.boundaryPassages(exit);
+  
+  if (entranceBoundaries.length > 0) {
+    const [from, to] = entranceBoundaries[0];
+    edges.push({
+      from,
+      to,
+      isFixed: true  // Must be included for entrance
+    });
   }
   
-  /**
-   * Adds default entry and exit points to a maze
-   */
-  addDefaultEntryExit(grid: RectangularGrid): void {
-    // Add entry at top-left
-    grid.addEntryPoint({ row: 0, col: 0 }, Direction.North);
-    
-    // Add exit at bottom-right
-    const exitRow = grid.height - 1;
-    const exitCol = grid.width - 1;
-    grid.addEntryPoint({ row: exitRow, col: exitCol }, Direction.South);
+  if (exitBoundaries.length > 0) {
+    const [from, to] = exitBoundaries[0];
+    edges.push({
+      from,
+      to,
+      isFixed: true  // Must be included for exit
+    });
   }
   
-  /**
-   * Utility method to create a complete maze from grid dimensions
-   */
-  static createMaze(
-    width: number, 
-    height: number, 
-    options: MazeGenerationOptions = {}
-  ): RectangularGrid {
-    const grid = new RectangularGrid(width, height);
-    const generator = new MazeGenerator(options.seed);
-    generator.generateWithDFS(grid, options);
-    
-    // Add default entry/exit points unless explicitly disabled
-    if (options.addDefaultEntryExit !== false) {
-      generator.addDefaultEntryExit(grid);
+  // Create graph for spanning tree algorithm
+  const allNodes = new Set(cells);
+  // Add virtual boundary nodes
+  for (const edge of edges) {
+    allNodes.add(edge.from);
+    allNodes.add(edge.to);
+  }
+  
+  const graph: Graph<CellId> = {
+    nodes: allNodes,
+    edges
+  };
+  
+  // Generate spanning tree
+  const treeEdges = spanningTree(graph, random);
+  
+  // Convert edges back to passages (only between real cells)
+  const passages = new Set<[CellId, CellId]>();
+  
+  for (const edge of treeEdges) {
+    if (cells.has(edge.from) && cells.has(edge.to)) {
+      passages.add(makePassage(edge.from, edge.to));
+    }
+  }
+  
+  return {
+    cells,
+    passages,
+    entrance,
+    exit
+  };
+}
+
+// Validate a maze
+export function validateMaze(maze: Maze, grid: Grid): string[] {
+  const errors: string[] = [];
+  
+  // Check entrance and exit are in maze
+  if (!maze.cells.has(maze.entrance)) {
+    errors.push('Entrance not in maze cells');
+  }
+  
+  if (!maze.cells.has(maze.exit)) {
+    errors.push('Exit not in maze cells');
+  }
+  
+  // Check passages are between valid cells
+  for (const [cellA, cellB] of maze.passages) {
+    if (!maze.cells.has(cellA) || !maze.cells.has(cellB)) {
+      continue; // Skip boundary passages
     }
     
-    return grid;
+    // Check cells are neighbors in grid
+    const neighborsA = grid.neighbors(cellA);
+    if (!neighborsA.includes(cellB)) {
+      errors.push(`Invalid passage between non-neighbors: ${cellA} - ${cellB}`);
+    }
   }
+  
+  // Check connectivity by building adjacency and doing BFS
+  const adj = new Map<CellId, Set<CellId>>();
+  for (const cell of maze.cells) {
+    adj.set(cell, new Set());
+  }
+  
+  // Add adjacencies from passages
+  for (const [cellA, cellB] of maze.passages) {
+    if (maze.cells.has(cellA) && maze.cells.has(cellB)) {
+      adj.get(cellA)!.add(cellB);
+      adj.get(cellB)!.add(cellA);
+    }
+  }
+  
+  // BFS from entrance
+  const visited = new Set<CellId>();
+  const queue = [maze.entrance];
+  
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    
+    visited.add(current);
+    
+    for (const neighbor of adj.get(current) || []) {
+      if (!visited.has(neighbor)) {
+        queue.push(neighbor);
+      }
+    }
+  }
+  
+  // Check all cells are reachable
+  if (visited.size !== maze.cells.size) {
+    errors.push(`Not all cells reachable: ${visited.size}/${maze.cells.size}`);
+  }
+  
+  // Check exit is reachable
+  if (!visited.has(maze.exit)) {
+    errors.push('Exit not reachable from entrance');
+  }
+  
+  return errors;
 }

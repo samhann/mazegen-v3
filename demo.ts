@@ -1,62 +1,70 @@
-#!/usr/bin/env tsx
+import { RectangularGrid, generateMaze, solveMaze, ASCIIRenderer, SVGRenderer } from './src';
 
-import { MazeGenerator, MazeValidator, MazeSolver, SVGRenderer } from './src/maze';
+// Demo the complete maze system
+console.log('🌟 Elegant Maze Generator Demo 🌟\n');
 
-/**
- * Demonstrates the complete maze generation pipeline
- */
-function runMazeDemo() {
-  console.log('🌟 Maze Generation Demo\n');
-  
-  // Generate a maze
-  console.log('1. Generating 8x8 maze...');
-  const maze = MazeGenerator.createMaze(8, 8, {
-    seed: 42,
-    addDefaultEntryExit: true
-  });
-  
-  // Validate the maze
-  console.log('2. Validating maze structure...');
-  const validation = MazeValidator.validate(maze);
-  console.log(`   ✅ Valid: ${validation.isValid}`);
-  console.log(`   🔗 Connected: ${validation.isConnected}`);
-  console.log(`   🚫 No cycles: ${validation.hasNoCycles}`);
-  console.log(`   📊 Cells: ${validation.cellCount}, Passages: ${validation.passageCount}`);
-  
-  // Solve the maze
-  console.log('3. Finding solution path...');
-  const solution = MazeSolver.findSolutionPath(maze);
-  console.log(`   🎯 Solvable: ${solution.found}`);
-  if (solution.found) {
-    console.log(`   📏 Solution length: ${solution.length} steps`);
-    console.log(`   🛤️  Path: ${solution.path.length} cells`);
-  }
-  
-  // Analyze difficulty
-  console.log('4. Analyzing maze difficulty...');
-  const difficulty = MazeSolver.analyzeDifficulty(maze);
-  console.log(`   💀 Dead ends: ${difficulty.deadEnds}`);
-  console.log(`   📈 Solution ratio: ${(difficulty.solutionRatio * 100).toFixed(1)}%`);
-  
-  // Generate HTML visualization
-  console.log('5. Generating HTML visualization...');
-  const html = SVGRenderer.createHTMLPage(maze, {
-    cellSize: 25,
-    showSolution: true,
-    solutionColor: '#ff0000',
-    wallColor: '#333333'
-  });
-  
-  console.log('\n📄 HTML Output:');
-  console.log('================');
-  console.log(html);
-  
-  console.log('\n✨ Demo completed successfully!');
-  console.log('💡 Copy the HTML output above to a .html file and open in browser to view the maze.');
+// Create a 6x6 grid
+const grid = new RectangularGrid(6, 6);
+console.log(`Grid: ${grid.cells().length} cells`);
+console.log(`Entrance: ${grid.entranceCell()}`);
+console.log(`Exit: ${grid.exitCell()}\n`);
+
+// Generate a random maze
+const maze = generateMaze(grid);
+console.log(`Generated maze with ${maze.passages.size} passages\n`);
+
+// Solve the maze
+const solution = solveMaze(maze);
+console.log(`Solution found: ${solution ? solution.length : 0} steps\n`);
+
+// Render in ASCII
+const asciiRenderer = new ASCIIRenderer();
+console.log('ASCII Maze with Solution:');
+console.log(asciiRenderer.renderMaze(maze, grid, solution || []));
+console.log();
+
+// Render as SVG
+const svgRenderer = new SVGRenderer({
+  cellSize: 40,
+  solutionColor: '#ff6b6b',
+  entranceColor: '#51cf66',
+  exitColor: '#ffd43b'
+});
+
+const svg = svgRenderer.render(maze, grid, solution || []);
+
+// Save SVG to file
+import * as fs from 'fs';
+fs.writeFileSync('maze-demo.svg', svg);
+console.log('SVG saved to maze-demo.svg');
+
+// Some stats
+console.log('\n📊 Stats:');
+console.log(`• Total cells: ${maze.cells.size}`);
+console.log(`• Total passages: ${maze.passages.size}`);
+console.log(`• Internal passages: ${Array.from(maze.passages).filter(([a, b]) => maze.cells.has(a) && maze.cells.has(b)).length}`);
+console.log(`• Solution length: ${solution?.length || 0} steps`);
+console.log(`• Code lines: ~${countCodeLines()} lines total`);
+
+function countCodeLines(): number {
+  // Rough estimate of our implementation
+  return [
+    'maze-core.ts',
+    'rectangular-grid.ts', 
+    'spanning-tree.ts',
+    'maze-generator.ts',
+    'maze-solver.ts',
+    'ascii-renderer.ts',
+    'svg-renderer.ts'
+  ].reduce((total, file) => {
+    try {
+      const content = fs.readFileSync(`src/${file}`, 'utf8');
+      const lines = content.split('\n').filter(line => 
+        line.trim() && !line.trim().startsWith('//') && !line.trim().startsWith('*')
+      );
+      return total + lines.length;
+    } catch {
+      return total;
+    }
+  }, 0);
 }
-
-if (require.main === module) {
-  runMazeDemo();
-}
-
-export { runMazeDemo };

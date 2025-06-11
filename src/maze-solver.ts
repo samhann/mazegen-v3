@@ -1,187 +1,104 @@
-import { RectangularGrid } from './rectangular-grid';
-import { Coordinates, coordinatesToString, coordinatesEqual, Direction, DIRECTION_DELTAS, addCoordinates } from './coordinates';
+import { Maze, CellId, Solution } from './maze-core';
 
-export interface SolutionPath {
-  path: Coordinates[];
-  length: number;
-  found: boolean;
+// Solve a maze using BFS to find shortest path
+export function solveMaze(maze: Maze): Solution | null {
+  // Build adjacency list from passages
+  const adj = new Map<CellId, Set<CellId>>();
+  
+  for (const cell of maze.cells) {
+    adj.set(cell, new Set());
+  }
+  
+  // Add connections from passages (only between maze cells)
+  for (const [cellA, cellB] of maze.passages) {
+    if (maze.cells.has(cellA) && maze.cells.has(cellB)) {
+      adj.get(cellA)!.add(cellB);
+      adj.get(cellB)!.add(cellA);
+    }
+  }
+  
+  // BFS from entrance to exit
+  const queue: CellId[] = [maze.entrance];
+  const parent = new Map<CellId, CellId>();
+  parent.set(maze.entrance, maze.entrance);
+  
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    
+    if (current === maze.exit) {
+      // Reconstruct path
+      const path: CellId[] = [];
+      let node = maze.exit;
+      
+      while (node !== maze.entrance) {
+        path.unshift(node);
+        node = parent.get(node)!;
+      }
+      path.unshift(maze.entrance);
+      
+      return path;
+    }
+    
+    // Explore neighbors
+    for (const neighbor of adj.get(current) || []) {
+      if (!parent.has(neighbor)) {
+        parent.set(neighbor, current);
+        queue.push(neighbor);
+      }
+    }
+  }
+  
+  return null; // No path found
 }
 
-export class MazeSolver {
-  /**
-   * Finds the shortest path between two points using BFS
-   */
-  static findPath(grid: RectangularGrid, start: Coordinates, end: Coordinates): SolutionPath {
-    if (!grid.isValidCoordinate(start) || !grid.isValidCoordinate(end)) {
-      return { path: [], length: 0, found: false };
+// Check if a path is valid in the maze
+export function validateSolution(maze: Maze, solution: Solution): string[] {
+  const errors: string[] = [];
+  
+  if (solution.length === 0) {
+    errors.push('Empty solution');
+    return errors;
+  }
+  
+  // Check starts at entrance
+  if (solution[0] !== maze.entrance) {
+    errors.push(`Solution doesn't start at entrance: ${solution[0]} != ${maze.entrance}`);
+  }
+  
+  // Check ends at exit
+  if (solution[solution.length - 1] !== maze.exit) {
+    errors.push(`Solution doesn't end at exit: ${solution[solution.length - 1]} != ${maze.exit}`);
+  }
+  
+  // Check all cells are in maze
+  for (const cell of solution) {
+    if (!maze.cells.has(cell)) {
+      errors.push(`Solution contains invalid cell: ${cell}`);
     }
-    
-    if (coordinatesEqual(start, end)) {
-      return { path: [start], length: 0, found: true };
+  }
+  
+  // Build adjacency from passages
+  const adj = new Map<CellId, Set<CellId>>();
+  for (const cell of maze.cells) {
+    adj.set(cell, new Set());
+  }
+  
+  for (const [cellA, cellB] of maze.passages) {
+    if (maze.cells.has(cellA) && maze.cells.has(cellB)) {
+      adj.get(cellA)!.add(cellB);
+      adj.get(cellB)!.add(cellA);
     }
+  }
+  
+  // Check each step is valid (adjacent cells with passage)
+  for (let i = 0; i < solution.length - 1; i++) {
+    const current = solution[i];
+    const next = solution[i + 1];
     
-    const visited = new Set<string>();
-    const queue: { cell: Coordinates; path: Coordinates[] }[] = [];
-    
-    queue.push({ cell: start, path: [start] });
-    visited.add(coordinatesToString(start));
-    
-    while (queue.length > 0) {
-      const { cell: current, path } = queue.shift()!;
-      
-      // Check all neighbors
-      const neighbors = grid.getNeighbors(current);
-      
-      for (const neighbor of neighbors) {
-        const neighborKey = coordinatesToString(neighbor);
-        
-        // Skip if already visited or if there's a wall
-        if (visited.has(neighborKey) || grid.hasWall(current, neighbor)) {
-          continue;
-        }
-        
-        const newPath = [...path, neighbor];
-        
-        // Check if we reached the end
-        if (coordinatesEqual(neighbor, end)) {
-          return {
-            path: newPath,
-            length: newPath.length - 1,
-            found: true
-          };
-        }
-        
-        visited.add(neighborKey);
-        queue.push({ cell: neighbor, path: newPath });
-      }
+    if (!adj.get(current)?.has(next)) {
+      errors.push(`Invalid step: no passage from ${current} to ${next}`);
     }
-    
-    return { path: [], length: 0, found: false };
   }
   
-  /**
-   * Finds path between entry and exit points (if they exist)
-   */
-  static findSolutionPath(grid: RectangularGrid): SolutionPath {
-    const entryPoints = grid.getEntryPoints();
-    
-    if (entryPoints.length < 2) {
-      return { path: [], length: 0, found: false };
-    }
-    
-    // Find entry and exit points (typically first and last)
-    const entry = entryPoints[0].cell;
-    const exit = entryPoints[entryPoints.length - 1].cell;
-    
-    return this.findPath(grid, entry, exit);
-  }
-  
-  /**
-   * Gets the cell adjacent to a border entry point (where you actually enter the maze)
-   */
-  static getEntryCell(grid: RectangularGrid, entryPoint: { cell: Coordinates; direction: Direction }): Coordinates {
-    // The entry cell is the cell inside the maze that connects to the entry point
-    return entryPoint.cell;
-  }
-  
-  /**
-   * Finds all possible paths between two points (useful for analysis)
-   */
-  static findAllPaths(
-    grid: RectangularGrid, 
-    start: Coordinates, 
-    end: Coordinates,
-    maxPaths: number = 100
-  ): SolutionPath[] {
-    const paths: SolutionPath[] = [];
-    
-    const dfs = (current: Coordinates, target: Coordinates, path: Coordinates[], visited: Set<string>) => {
-      if (paths.length >= maxPaths) return;
-      
-      if (coordinatesEqual(current, target)) {
-        paths.push({
-          path: [...path],
-          length: path.length - 1,
-          found: true
-        });
-        return;
-      }
-      
-      const neighbors = grid.getNeighbors(current);
-      
-      for (const neighbor of neighbors) {
-        const neighborKey = coordinatesToString(neighbor);
-        
-        if (!visited.has(neighborKey) && !grid.hasWall(current, neighbor)) {
-          visited.add(neighborKey);
-          path.push(neighbor);
-          
-          dfs(neighbor, target, path, visited);
-          
-          path.pop();
-          visited.delete(neighborKey);
-        }
-      }
-    };
-    
-    const visited = new Set<string>();
-    visited.add(coordinatesToString(start));
-    dfs(start, end, [start], visited);
-    
-    return paths;
-  }
-  
-  /**
-   * Checks if a maze is solvable (has path from entry to exit)
-   */
-  static isSolvable(grid: RectangularGrid): boolean {
-    const solution = this.findSolutionPath(grid);
-    return solution.found;
-  }
-  
-  /**
-   * Gets maze difficulty metrics based on solution characteristics
-   */
-  static analyzeDifficulty(grid: RectangularGrid): {
-    solutionLength: number;
-    solutionRatio: number;
-    deadEnds: number;
-    hasSolution: boolean;
-  } {
-    const solution = this.findSolutionPath(grid);
-    const deadEnds = this.countDeadEnds(grid);
-    const totalCells = grid.getCellCount();
-    
-    return {
-      solutionLength: solution.length,
-      solutionRatio: totalCells > 0 ? solution.length / totalCells : 0,
-      deadEnds,
-      hasSolution: solution.found
-    };
-  }
-  
-  /**
-   * Counts dead ends in the maze (cells with only one passage)
-   */
-  static countDeadEnds(grid: RectangularGrid): number {
-    let deadEnds = 0;
-    const allCells = grid.getAllCells();
-    
-    for (const cell of allCells) {
-      const neighbors = grid.getNeighbors(cell);
-      let openPassages = 0;
-      
-      for (const neighbor of neighbors) {
-        if (!grid.hasWall(cell, neighbor)) {
-          openPassages++;
-        }
-      }
-      
-      if (openPassages === 1) {
-        deadEnds++;
-      }
-    }
-    
-    return deadEnds;
-  }
+  return errors;
 }
