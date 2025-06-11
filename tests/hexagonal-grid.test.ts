@@ -89,8 +89,8 @@ describe('HexagonalGrid', () => {
       const entrance = grid.entranceCell();
       const exit = grid.exitCell();
       
-      const entranceBoundary = grid.boundaryPassages(entrance);
-      const exitBoundary = grid.boundaryPassages(exit);
+      const entranceBoundary = grid.boundaryWalls(entrance);
+      const exitBoundary = grid.boundaryWalls(exit);
       
       console.log('Entrance boundary passages:', entranceBoundary);
       console.log('Exit boundary passages:', exitBoundary);
@@ -101,7 +101,7 @@ describe('HexagonalGrid', () => {
 
     test('center cell is not on boundary', () => {
       const grid = new HexagonalGrid(2);
-      const centerBoundary = grid.boundaryPassages('0,0');
+      const centerBoundary = grid.boundaryWalls('0,0');
       
       expect(centerBoundary.length).toBe(0);
     });
@@ -145,7 +145,7 @@ describe('HexagonalGrid', () => {
       for (const cell of cells) {
         const neighbors = grid.neighbors(cell);
         const position = grid.position(cell);
-        const boundary = grid.boundaryPassages(cell);
+        const boundary = grid.boundaryWalls(cell);
         
         console.log(`Cell ${cell}:`);
         console.log(`  Position: [${position[0].toFixed(2)}, ${position[1].toFixed(2)}]`);

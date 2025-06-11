@@ -43,16 +43,16 @@ describe('RectangularGrid', () => {
     const grid = new RectangularGrid(3, 3);
     
     // Corner cells have 2 boundary passages
-    expect(grid.boundaryPassages('0,0').sort()).toEqual([
+    expect(grid.boundaryWalls('0,0').sort()).toEqual([
       ['-1,0', '0,0'],
       ['0,-1', '0,0']
     ]);
     
     // Edge cells have 1 boundary passage
-    expect(grid.boundaryPassages('1,0')).toEqual([['1,-1', '1,0']]);
+    expect(grid.boundaryWalls('1,0')).toEqual([['1,-1', '1,0']]);
     
     // Center cells have no boundary passages
-    expect(grid.boundaryPassages('1,1')).toEqual([]);
+    expect(grid.boundaryWalls('1,1')).toEqual([]);
   });
 
   test('position returns correct coordinates', () => {

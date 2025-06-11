@@ -16,7 +16,15 @@ export interface Grid {
   neighbors(cell: CellId): CellId[];
   entranceCell(): CellId;
   exitCell(): CellId;
-  boundaryPassages(cell: CellId): Passage[];
+  
+  // BOUNDARY WALLS (not passages!):
+  // Returns wall edges that connect this cell to virtual "outside" cells.
+  // These represent the perimeter walls that must ALWAYS exist to contain the maze.
+  // They are NOT passages - they are walls that prevent movement to the outside.
+  // The spanning tree algorithm should include these as FIXED edges (walls that cannot be removed).
+  // Entry/exit openings are created by NOT including specific boundary walls at entrance/exit cells.
+  boundaryWalls(cell: CellId): Passage[];
+  
   position(cell: CellId): [number, number];
 }
 

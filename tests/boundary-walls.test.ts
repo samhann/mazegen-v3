@@ -20,7 +20,7 @@ describe('Boundary Wall Tests', () => {
         
         if (isBoundary && !isEntrance && !isExit) {
           // Boundary cells (except entrance/exit) should not have passages to virtual outside nodes
-          const boundaries = grid.boundaryPassages(cell);
+          const boundaries = grid.boundaryWalls(cell);
           for (const boundary of boundaries) {
             // Check this boundary passage is NOT in the maze passages
             let found = false;
@@ -87,7 +87,7 @@ describe('Boundary Wall Tests', () => {
       // Check boundary cells
       const cells = Array.from(maze.cells);
       for (const cell of cells) {
-        const boundaries = grid.boundaryPassages(cell);
+        const boundaries = grid.boundaryWalls(cell);
         if (boundaries.length > 0 && cell !== entrance && cell !== exit) {
           // This is a boundary cell that's not entrance/exit
           // Its boundary passages should NOT be in the maze

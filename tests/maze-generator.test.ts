@@ -104,7 +104,7 @@ describe('generateMaze', () => {
       neighbors: (cell: string) => grid.neighbors(cell),
       entranceCell: () => 'invalid',
       exitCell: () => '2,2',
-      boundaryPassages: (cell: string) => grid.boundaryPassages(cell),
+      boundaryWalls: (cell: string) => grid.boundaryWalls(cell),
       position: (cell: string) => grid.position(cell)
     };
     

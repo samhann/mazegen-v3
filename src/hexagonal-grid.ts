@@ -58,12 +58,13 @@ export class HexagonalGrid implements Grid {
     return `${this.radius},0`;
   }
 
-  boundaryPassages(cell: CellId): Passage[] {
+  boundaryWalls(cell: CellId): Passage[] {
     if (!this.isBoundaryCell(cell)) {
       return [];
     }
     
-    // Create a virtual "outside" cell - this logic might be flawed
+    // Create wall edge between boundary cell and virtual "outside" cell
+    // This represents the solid perimeter wall that contains the maze
     const [q, r] = this.parseAxialCoords(cell);
     const outsideCell = `outside-${q},${r}`;
     

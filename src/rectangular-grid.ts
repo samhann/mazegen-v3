@@ -40,11 +40,12 @@ export class RectangularGrid implements Grid {
     return `${this.width-1},${this.height-1}`;
   }
 
-  boundaryPassages(cell: CellId): Passage[] {
+  boundaryWalls(cell: CellId): Passage[] {
     const [x, y] = cell.split(',').map(Number);
     const result: Passage[] = [];
     
-    // Create virtual "outside" cells for boundary passages
+    // Create wall edges between boundary cells and virtual "outside" cells
+    // These represent the solid perimeter walls that contain the maze
     if (x === 0) result.push(makePassage(`-1,${y}`, cell));
     if (x === this.width - 1) result.push(makePassage(cell, `${this.width},${y}`));
     if (y === 0) result.push(makePassage(`${x},-1`, cell));

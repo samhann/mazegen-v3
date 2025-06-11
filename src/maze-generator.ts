@@ -31,10 +31,10 @@ export function generateMaze(grid: Grid, random: () => number = Math.random): Ma
     }
   }
   
-  // Add boundary edges for all cells (to create perimeter walls)
+  // Add boundary wall edges for all cells (to create perimeter walls)
   // These are fixed edges EXCEPT at entrance/exit where we want openings
   for (const cell of cells) {
-    const boundaries = grid.boundaryPassages(cell);
+    const boundaries = grid.boundaryWalls(cell);
     for (const [from, to] of boundaries) {
       // Skip entrance and exit - we want openings there
       if (cell === entrance || cell === exit) {

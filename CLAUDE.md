@@ -91,3 +91,26 @@ For hexagonal implementation: Use axial coordinates internally, convert to x,y o
 - Visual inspection of small examples
 - Manual verification of key calculations
 - Incremental testing at each step
+
+## SVG to PNG Conversion Tool
+
+For visual debugging of maze rendering, use the SVG to PNG conversion tool:
+
+```bash
+# Convert SVG to PNG for visual inspection
+npx ts-node svg-to-png-rsvg.ts input.svg output.png [width]
+```
+
+**Requirements:** Install ImageMagick or librsvg:
+- macOS: `brew install imagemagick` or `brew install librsvg` 
+- The tool will automatically try both and fall back gracefully
+
+**Claude Code Integration:**
+- Use the Read tool on generated PNG files to visually inspect maze rendering
+- This enables Claude to debug visual issues independently
+- Particularly useful for geometric problems like wall lengths and boundary rendering
+
+**Mathematical Insights for Hexagonal Grids:**
+- Proper wall length for hexagonal grids: √3 × distance between centers ≈ 1.732
+- This accounts for the geometry of regular hexagons in a tessellation
+- Rectangular grids use 0.4 × distance for aesthetic short wall segments
