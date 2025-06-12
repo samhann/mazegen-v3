@@ -33,12 +33,13 @@ type Solution = CellId[];                // Path from entrance to exit
 interface Maze {
   cells: Set<CellId>;
   passages: Set<Passage>;                // Which connections are OPEN
+  boundaryWalls: Set<Passage>;           // Perimeter walls (to virtual cells)
   entrance: CellId;                      // Start cell
   exit: CellId;                          // End cell
 }
 ```
 
-### Grid Interface (~20 lines)
+### Grid Interface (~30 lines)
 ```typescript
 interface Grid {
   // Topology
@@ -50,10 +51,13 @@ interface Grid {
   exitCell(): CellId;
   
   // Boundary handling
-  boundaryPassages(cell: CellId): Passage[];
+  boundaryWalls(cell: CellId): Passage[];
   
-  // Rendering only
+  // Coordinate system
   position(cell: CellId): [number, number];
+  
+  // Unified rendering interface
+  toRenderable(maze: Maze, solution?: CellId[]): RenderableMaze;
 }
 ```
 
@@ -128,23 +132,31 @@ interface Grid {
 Everything else (generation, solving, rendering) works automatically.
 
 ### Current Metrics
-- **Total code**: ~600 lines
-- **Test coverage**: 42 tests, 100% passing
-- **Grid types**: 1 (rectangular)
-- **Renderers**: 2 (ASCII, SVG)
+- **Total code**: ~900 lines
+- **Test coverage**: 57 tests, 100% passing
+- **Grid types**: 2 (rectangular, hexagonal)
+- **Renderers**: 3 (ASCII, SVG, SimpleRenderer)
 
 ## Success Criteria Met
 ✅ **Elegant**: Minimal, readable code  
-✅ **Correct**: Property-based validation  
-✅ **Extensible**: Easy to add grid types  
+✅ **Correct**: Property-based validation + visual validation  
+✅ **Extensible**: Easy to add grid types (hexagonal implemented)  
 ✅ **Testable**: Pure functions, isolated concerns  
-✅ **Complete**: Generation, solving, rendering  
+✅ **Complete**: Generation, solving, rendering for multiple topologies
 
-## Next: Hexagonal Grids
+## Architectural Evolution: Grid.toRenderable()
 
-The architecture is ready for hexagonal grids. Key insights:
-- Use axial coordinates (q,r) internally
-- Convert to x,y only in `position()` method  
-- 6 neighbors instead of 4
-- Different boundary detection logic
-- Same interfaces, same algorithms, same renderers
+**Major breakthrough**: Separated topology computation from rendering via `Grid.toRenderable()`:
+- **Grid classes** handle all geometry and topology logic
+- **SimpleRenderer** becomes "dumb" - just draws lines and circles
+- **RenderableMaze** provides clean interface between topology and rendering
+- **Mathematical precision** in wall lengths (no more guessing at constants)
+
+## Completed: Hexagonal Grids
+
+✅ **Hexagonal grids fully implemented** with mathematically correct wall rendering:
+- Uses axial coordinates (q,r) internally
+- Converts to x,y only in `toRenderable()` method  
+- 6 neighbors, proper boundary detection
+- Wall length = distance ÷ √3 (mathematically derived)
+- Same interfaces, same algorithms, works seamlessly

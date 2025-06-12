@@ -110,7 +110,35 @@ npx ts-node svg-to-png-rsvg.ts input.svg output.png [width]
 - This enables Claude to debug visual issues independently
 - Particularly useful for geometric problems like wall lengths and boundary rendering
 
-**Mathematical Insights for Hexagonal Grids:**
-- Proper wall length for hexagonal grids: √3 × distance between centers ≈ 1.732
-- This accounts for the geometry of regular hexagons in a tessellation
-- Rectangular grids use 0.4 × distance for aesthetic short wall segments
+## Mathematical Wall Length Derivation: Critical Learning
+
+**LESSON: Derive, don't guess at geometric constants**
+
+### The Wall Length Problem
+Multiple attempts to "fix" wall rendering by guessing multiplier values (0.4, 0.7, 0.8, 1.0) led to frustration. The breakthrough came from mathematical first principles.
+
+### Correct Mathematical Derivations:
+
+**Rectangular Grids:**
+- Cells occupy 1×1 squares at integer coordinates  
+- Cell boundaries extend ±0.5 from center
+- **Wall length = 1.0** (spans exactly between boundaries)
+- Implementation: `±0.5` from midpoint
+
+**Hexagonal Grids:**  
+- Centers are 1.0 units apart (axial coordinates)
+- But hexagons have **side length = center_distance ÷ √3**
+- Walls connect hexagon edges, NOT center-to-center
+- **Wall length = distance ÷ √3 ≈ 0.577** (the hexagon side length)
+- Implementation: `length / Math.sqrt(3)`
+
+### Key Insight: Wall ≠ Center Distance
+The critical error was assuming walls should span the full distance between centers. Actually:
+- **Rectangular**: Walls span cell boundaries (1.0 units)
+- **Hexagonal**: Walls span hexagon edges (0.577 × center distance)
+
+### Metacognitive Lesson
+- **Visual feedback beats theoretical reasoning** - User's "it looks wrong" trumped mathematical confidence
+- **Geometry has exact answers** - No need for magic numbers or trial-and-error
+- **Test assumptions about coordinate systems** - "Obviously correct" formulas may be wrong
+- **When math disagrees with visual reality, question the math first**

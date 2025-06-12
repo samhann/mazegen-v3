@@ -189,8 +189,10 @@ export class HexagonalGrid implements Grid {
             const perpX = -dy / length;
             const perpY = dx / length;
             
-            // Wall length - longer for hexagonal grids to close gaps
-            const wallLength = length * 0.8; // Use 80% of distance between centers
+            // Wall length - CORRECT mathematical derivation for hexagonal tiling
+            // For regular hexagons: side_length = center_distance / √3
+            // Wall connects hexagon edges, not centers, so use side length
+            const wallLength = length / Math.sqrt(3); // ≈ 0.577 * distance (mathematically exact)
             
             const wallX1 = midX + perpX * wallLength / 2;
             const wallY1 = midY + perpY * wallLength / 2;

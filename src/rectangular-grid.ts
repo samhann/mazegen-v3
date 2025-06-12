@@ -112,18 +112,20 @@ export class RectangularGrid implements Grid {
           const midX = x + dx * 0.5;
           const midY = y + dy * 0.5;
           
-          // Create wall perpendicular to direction
+          // Create wall perpendicular to direction  
+          // MATHEMATICAL DERIVATION: For rectangular grids with 1×1 cells at integer coordinates,
+          // each cell boundary is ±0.5 from center, so walls must span exactly 1.0 units (±0.5)
           let wallX1, wallY1, wallX2, wallY2;
           if (dx !== 0) {
             // Vertical wall (between east/west cells)
             wallX1 = wallX2 = midX;
-            wallY1 = midY - 0.4;
-            wallY2 = midY + 0.4;
+            wallY1 = midY - 0.5;
+            wallY2 = midY + 0.5;
           } else {
             // Horizontal wall (between north/south cells)
-            wallX1 = midX - 0.4;
+            wallX1 = midX - 0.5;
             wallY1 = wallY2 = midY;
-            wallX2 = midX + 0.4;
+            wallX2 = midX + 0.5;
           }
           
           // Create canonical edge key to prevent duplicates

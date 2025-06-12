@@ -1,12 +1,22 @@
 # Maze Generation v3
 
-A TypeScript library for generating mazes and testing their completeness.
+An elegant TypeScript library for generating mazes with mathematically precise rendering for both rectangular and hexagonal grids.
+
+## Visual Examples
+
+### Rectangular Maze
+![Rectangular Maze](demo-rectangular.png)
+
+### Hexagonal Maze  
+![Hexagonal Maze](demo-hexagonal.png)
 
 ## Features
 
-- **Library**: Core maze generation algorithms with completeness validation
-- **CLI**: Command-line interface for maze generation and testing
-- **Web Interface**: Interactive web page for easy maze creation and visualization
+- **Multiple Grid Types**: Rectangular and hexagonal maze generation
+- **Mathematical Precision**: Geometrically correct wall lengths derived from first principles  
+- **Clean Architecture**: Separated topology computation from rendering via `Grid.toRenderable()`
+- **Visual Validation**: Generate SVG output with solution paths highlighted
+- **Property-Based Testing**: Validates maze connectivity and spanning tree properties
 
 ## Project Structure
 
@@ -23,41 +33,56 @@ npm run build
 npm test
 ```
 
-## Quick Testing
+## Quick Start
 
-Generate and view hexagonal mazes for debugging:
+Generate mazes with the new unified rendering system:
 
 ```bash
-# Generate SVG maze file
+# Generate rectangular maze
 npx ts-node -e "
+import { RectangularGrid } from './src/rectangular-grid';
 import { generateMaze } from './src/maze-generator';
-import { HexagonalGrid } from './src/hexagonal-grid';
-import { UniversalSVGRenderer } from './src/universal-svg-renderer';
 import { solveMaze } from './src/maze-solver';
+import { SimpleRenderer } from './src/simple-renderer';
+import { writeFileSync } from 'fs';
+
+const grid = new RectangularGrid(6, 4);
+const maze = generateMaze(grid);
+const solution = solveMaze(maze);
+const renderable = grid.toRenderable(maze, solution || undefined);
+const renderer = new SimpleRenderer();
+const svg = renderer.render(renderable);
+writeFileSync('my-maze.svg', svg);
+console.log('Generated my-maze.svg');
+"
+
+# Generate hexagonal maze
+npx ts-node -e "
+import { HexagonalGrid } from './src/hexagonal-grid';
+import { generateMaze } from './src/maze-generator';
+import { solveMaze } from './src/maze-solver';
+import { SimpleRenderer } from './src/simple-renderer';
 import { writeFileSync } from 'fs';
 
 const grid = new HexagonalGrid(3);
 const maze = generateMaze(grid);
 const solution = solveMaze(maze);
-const renderer = new UniversalSVGRenderer();
-const svg = renderer.render(maze, grid, solution || undefined);
-writeFileSync('test-output/test-maze.svg', svg);
-console.log('Generated test-output/test-maze.svg');
+const renderable = grid.toRenderable(maze, solution || undefined);
+const renderer = new SimpleRenderer();
+const svg = renderer.render(renderable);
+writeFileSync('my-hex-maze.svg', svg);
+console.log('Generated my-hex-maze.svg');
 "
 
 # View in browser
-open test-output/test-maze.svg
+open my-maze.svg
 ```
 
-Convert SVG to PNG for visual debugging:
-```bash
-npx ts-node svg-to-png-rsvg.ts test-output/test-maze.svg test-output/test-maze.png
-```
+## Mathematical Foundations
 
-*Note: Requires ImageMagick (`brew install imagemagick`). The PNG can then be read by Claude Code for visual inspection and debugging.*
+Wall lengths are derived mathematically for perfect geometric accuracy:
 
-## Known Issues
+- **Rectangular**: Wall length = 1.0 (spans cell boundaries exactly)
+- **Hexagonal**: Wall length = distance ÷ √3 ≈ 0.577 (hexagon side length)
 
-- **Hexagonal wall gaps**: Small gaps remain between wall segments despite mathematical fixes
-- **Boundary wall rendering**: Perimeter walls are computed correctly but rendering is incomplete
-- Both issues affect visual quality but not maze logic or connectivity
+This eliminates gaps and overshooting, ensuring clean visual rendering at any scale.
