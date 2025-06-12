@@ -27,6 +27,33 @@ export interface Grid {
   boundaryWalls(cell: CellId): Passage[];
   
   position(cell: CellId): [number, number];
+  
+  // Convert maze to renderable format - grid handles all geometry and topology
+  toRenderable(maze: Maze, solution?: CellId[]): RenderableMaze;
+}
+
+// Renderable maze types for simplified rendering
+export interface RenderableEdge {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export interface RenderableCell {
+  x: number;
+  y: number;
+  type: 'entrance' | 'exit' | 'solution' | 'normal';
+}
+
+export interface RenderablePath {
+  points: Array<{ x: number; y: number }>;
+}
+
+export interface RenderableMaze {
+  edges: RenderableEdge[];    // Only walls to draw
+  cells: RenderableCell[];    // Cells with positions and types
+  solutionPath?: RenderablePath;  // Connected solution line
 }
 
 // Helper to create sorted passage

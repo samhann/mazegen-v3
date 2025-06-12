@@ -106,7 +106,8 @@ describe('generateMaze', () => {
       entranceCell: () => 'invalid',
       exitCell: () => '2,2',
       boundaryWalls: (cell: string) => grid.boundaryWalls(cell),
-      position: (cell: string) => grid.position(cell)
+      position: (cell: string) => grid.position(cell),
+      toRenderable: (maze: any, solution?: any) => grid.toRenderable(maze, solution)
     };
     
     expect(() => generateMaze(badGrid, Math.random)).toThrow('Entrance cell not in grid');
